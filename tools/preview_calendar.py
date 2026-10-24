@@ -27,7 +27,7 @@ from focus_guard.appapi import AppApi  # noqa: E402
 from focus_guard.events import Event, EventStore  # noqa: E402
 from focus_guard.paths import Paths  # noqa: E402
 
-TITLE = "Focus Guard preview"
+TITLE = "Workmode preview"
 DUMMY_PHRASE = "preview phrase that is long enough"
 DUMMY_TOKEN = "0123456789abcdef0123456789abcdef"
 DUMMY_VIDEO_URL = "https://example.com/preview.mp4"

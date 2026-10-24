@@ -1,4 +1,4 @@
-# Focus Guard
+# Workmode
 
 A work-session tool for Windows 11. Start a session; until it ends only the apps and Chrome sites on your
 allow-list stay in front: other programs wait minimized until the session ends (nothing is closed, they keep

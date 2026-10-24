@@ -1,4 +1,4 @@
-# Focus Guard
+# Workmode
 
 **A Windows 11 focus tool that plans work sessions in a calendar and, while one runs, keeps only the apps and sites you
 chose in front.**
@@ -35,7 +35,7 @@ chose in front.**
 
 Requires Windows 11, Python 3.12 and Google Chrome.
 
-1. Clone the repository into a folder inside your user profile (for example `%USERPROFILE%\focus-guard`).
+1. Clone the repository into a folder inside your user profile (for example `%USERPROFILE%\Workmode`).
 2. Run `install.cmd`. It installs the Python packages, writes a local `config.json` and the extension's
    `config.js` with a fresh token, and creates the desktop shortcut.
 3. In Chrome open `chrome://extensions`, turn on Developer mode, choose "Load unpacked" and pick the `extension`

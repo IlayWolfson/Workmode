@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Focus Guard",
+  "name": "Workmode",
   "version": "1.2.1",
   "description": "Keeps only the allowed sites open during a Focus Guard session.",
   "minimum_chrome_version": "110",
