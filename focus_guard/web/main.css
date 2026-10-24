@@ -1,0 +1,14 @@
+[hidden] { display: none !important; }
+
+/* The session clock: small and quiet. */
+.clock { height: 100%; box-sizing: border-box; padding: 12px 18px 14px; display: flex; flex-direction: column; gap: 8px; }
+.clock-top { display: flex; justify-content: space-between; align-items: center; min-height: 28px; }
+.icon { background: transparent; padding: 2px 6px; font-size: 18px; }
+.icon:hover { background: var(--line); }
+.remaining { font-size: 44px; font-weight: 600; letter-spacing: 1px; text-align: center; direction: ltr; }
+.bar { height: 4px; border-radius: 2px; background: var(--line); overflow: hidden; }
+.bar-fill { height: 100%; width: 0; background: var(--blue); transition: width 1s linear; }
+.clock > .soft { text-align: center; }
+.wait { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.wait button { font-size: 13px; padding: 6px 10px; flex: none; }
+.stalled { display: flex; align-items: center; justify-content: space-between; gap: 8px; }

@@ -1,0 +1,5 @@
+ruff>=0.6
+mypy>=1.10
+types-psutil
+types-pywin32
+tzdata  # Asia/Jerusalem in the DST tests

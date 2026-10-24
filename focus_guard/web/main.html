@@ -1,0 +1,230 @@
+<!doctype html>
+<html dir="rtl" lang="he">
+<head>
+<meta charset="utf-8">
+<title>Focus Guard</title>
+<link rel="stylesheet" href="common.css">
+<link rel="stylesheet" href="main.css">
+<link rel="stylesheet" href="calendar.css">
+<link rel="stylesheet" href="eventform.css">
+<link rel="stylesheet" href="settings.css">
+<link rel="stylesheet" href="allowed.css">
+</head>
+<body>
+<section id="clockView" class="clock" hidden>
+  <div class="clock-top">
+    <span class="soft" id="clockTitle"></span>
+    <button class="icon" id="toCalendar" title="יומן" aria-label="יומן">📅</button>
+  </div>
+  <div class="remaining" id="remaining"></div>
+  <div class="bar"><div class="bar-fill" id="barFill"></div></div>
+  <div class="soft" id="clockNote"></div>
+  <div class="wait" id="waitBox" hidden>
+    <div class="soft" id="waitingLine"></div>
+    <button id="mute"></button>
+  </div>
+  <div class="stalled" id="stalledBox" hidden>
+    <div class="soft">האכיפה לא רצה.</div>
+    <button class="go" id="resume">המשך אכיפה</button>
+  </div>
+</section>
+
+<section id="calendarView" class="gcal">
+  <header class="topbar">
+    <span class="brand">Focus Guard</span>
+    <button class="outline" id="today">היום</button>
+    <button class="round" id="prev" title="השבוע הקודם" aria-label="השבוע הקודם">›</button>
+    <button class="round" id="next" title="השבוע הבא" aria-label="השבוע הבא">‹</button>
+    <h1 id="rangeTitle"></h1>
+    <span class="grow"></span>
+    <button class="outline" id="toClock" hidden>חזרה לשעון</button>
+    <button class="round" id="gear" title="הגדרות" aria-label="הגדרות">⚙</button>
+  </header>
+  <div class="body">
+    <aside class="side">
+      <div class="create-wrap">
+        <button class="create" id="create" aria-haspopup="menu"><span class="plus">+</span> יצירה</button>
+        <div class="menu" id="createMenu" role="menu" hidden>
+          <button role="menuitem" id="createEvent">אירוע</button>
+          <button role="menuitem" id="createNow">התחלה עכשיו</button>
+        </div>
+      </div>
+      <div class="mini" id="mini"></div>
+      <button class="side-button" id="sideGear">⚙ הגדרות</button>
+      <button class="side-button allow-btn" id="sideAllowed">✅ מה מותר בסשן</button>
+      <div class="side-note warn" id="problem" hidden></div>
+      <div class="side-note warn" id="configError" hidden></div>
+      <div class="side-box" id="hint"></div>
+    </aside>
+    <main class="cal" id="calendar"></main>
+  </div>
+
+  <div class="dialog" id="nowDialog" role="dialog" aria-labelledby="nowTitle" hidden>
+    <h2 id="nowTitle">התחלה עכשיו</h2>
+    <label for="minutes">כמה דקות?</label>
+    <input id="minutes" type="number" min="1" max="720" value="25">
+    <div class="choice">
+      <label><input type="radio" name="nowMode" id="nowLive" checked> אכיפה מלאה</label>
+      <label><input type="radio" name="nowMode" id="nowTrial"> ניסיון</label>
+    </div>
+    <div class="msg" id="nowMsg"></div>
+    <div class="actions">
+      <button class="text" id="nowCancel">ביטול</button>
+      <button class="primary" id="nowStart">התחלה</button>
+    </div>
+  </div>
+  <div class="popover" id="popover" role="dialog" aria-label="אירוע" hidden>
+    <div class="pop-top"><button class="round small" id="popClose" title="סגירה" aria-label="סגירה">✕</button></div>
+    <input type="text" id="fTitle" class="title-input" placeholder="הוספת שם" maxlength="200">
+    <div class="when" id="fWhen"></div>
+    <div class="more" id="fMore" hidden>
+      <div class="when-edit">
+        <input type="date" id="fDate" aria-label="תאריך">
+        <input type="time" id="fStart" aria-label="התחלה">
+        <span>–</span>
+        <input type="time" id="fEnd" aria-label="סיום">
+      </div>
+      <div class="days" id="fDays"></div>
+    </div>
+    <select id="fRepeat" aria-label="חזרה"></select>
+    <label class="line"><input type="checkbox" id="fCue" checked> 🎵 תזכורת דקה לפני</label>
+    <div class="choice">
+      <label><input type="radio" name="fMode" id="fLive" checked> 🔒 אכיפה מלאה</label>
+      <label><input type="radio" name="fMode" id="fTrial"> ניסיון (לא נוגע בכלום)</label>
+    </div>
+    <div class="busy-note" id="fBusy" hidden>יש לך משהו אחר בזמן הזה</div>
+    <div class="msg" id="fMsg"></div>
+    <div class="actions">
+      <button class="text" id="fMoreBtn">אפשרויות נוספות</button>
+      <button class="primary" id="fSave">שמירה</button>
+    </div>
+  </div>
+  <div class="popover card-pop" id="card" role="dialog" aria-labelledby="cardTitle" hidden>
+    <div class="pop-top"><button class="round small" id="cardClose" title="סגירה" aria-label="סגירה">✕</button></div>
+    <div class="card-head">
+      <span class="swatch"></span>
+      <div>
+        <div class="card-title" id="cardTitle"></div>
+        <div class="card-when" id="cardWhen"></div>
+        <div class="card-repeat" id="cardRepeat"></div>
+        <div class="card-running" id="cardRunning" hidden></div>
+      </div>
+    </div>
+    <div class="actions">
+      <button class="text" id="cardDelete">מחיקה</button>
+      <button class="primary" id="cardEdit">עריכה</button>
+      <button class="primary danger" id="cardExit" hidden>יציאת חירום</button>
+    </div>
+  </div>
+  <div class="dialog" id="scopeDialog" role="dialog" aria-labelledby="scopeTitle" hidden>
+    <h2 id="scopeTitle"></h2>
+    <label><input type="radio" name="scope" id="scopeThis" checked> האירוע הזה</label>
+    <label><input type="radio" name="scope" id="scopeAll"> כל האירועים בסדרה</label>
+    <div class="actions">
+      <button class="text" id="scopeCancel">ביטול</button>
+      <button class="text" id="scopeOk">אישור</button>
+    </div>
+  </div>
+  <div class="dialog settings" id="settingsPanel" role="dialog" aria-labelledby="setTitle" hidden>
+    <h2 id="setTitle">הגדרות</h2>
+    <section>
+      <h3>שירי תזכורת</h3>
+      <div class="song-list" id="setSongs"></div>
+      <button class="text" id="setAddSong">+ הוספת שיר</button>
+      <div class="set-note">אם לא מסומן אף שיר, מתנגן שיר מובנה.</div>
+    </section>
+    <section>
+      <h3>סרטון עונש</h3>
+      <div class="song-list" id="setVideos"></div>
+      <div class="al-drop set-drop" id="setVideoDrop">
+        <button class="text" id="setAddVideo">+ הוספת סרטון משלי</button>
+        <div class="al-hint">או גרור לכאן קובץ וידאו (mp4, webm)</div>
+      </div>
+      <div class="set-note">אם לא מסומן אף סרטון, מתנגן סרטון ברירת המחדל.</div>
+    </section>
+    <section>
+      <label for="setGrace">שניות התארגנות בתחילת סשן</label>
+      <input type="number" id="setGrace" min="0" max="120">
+    </section>
+    <section>
+      <label class="line"><input type="checkbox" id="setAutostart"> הפעלה עם Windows</label>
+    </section>
+    <section>
+      <h3>משפט החירום</h3>
+      <input type="password" id="setPhrase" placeholder="משפט חדש" autocomplete="off">
+      <input type="password" id="setPhrase2" placeholder="שוב, לאישור" autocomplete="off">
+    </section>
+    <div class="msg" id="setMsg"></div>
+    <div class="actions">
+      <button class="text" id="setCancel">ביטול</button>
+      <button class="primary" id="setSave">שמירה</button>
+    </div>
+  </div>
+  <div class="dialog allow" id="allowPanel" role="dialog" aria-labelledby="alTitle" hidden>
+    <h2 id="alTitle">מה מותר בסשן</h2>
+    <div class="al-tabs" role="tablist">
+      <button class="al-tab" role="tab" data-tab="apps">תוכנות <span class="al-count" id="alCountApps"></span></button>
+      <button class="al-tab" role="tab" data-tab="sites">אתרים <span class="al-count" id="alCountSites"></span></button>
+      <button class="al-tab" role="tab" data-tab="yt">יוטיוב <span class="al-count" id="alCountYt"></span></button>
+    </div>
+    <section class="al-pane" data-pane="apps">
+      <h3>מותר עכשיו</h3>
+      <div class="al-list" id="alApps"></div>
+      <h3>פתוחות עכשיו במחשב</h3>
+      <div class="al-list" id="alOpen"></div>
+      <h3>תוכנה אחרת</h3>
+      <div class="al-drop" id="alDrop">
+        <input type="text" id="alFind" aria-label="שם תוכנה" autocomplete="off">
+        <div class="al-hint">הקלד שם תוכנה, או גרור לכאן קובץ / קיצור דרך</div>
+      </div>
+      <div class="al-list al-suggest" id="alFindList" hidden></div>
+    </section>
+    <section class="al-pane" data-pane="sites">
+      <h3>הוספת אתר</h3>
+      <div class="al-drop">
+        <input type="text" id="alSiteInput" dir="ltr" aria-label="קישור לאתר" autocomplete="off">
+        <div class="al-hint">הדבק קישור לאתר</div>
+      </div>
+      <div class="al-pick" id="alSiteChoice" hidden>
+        <label><input type="radio" name="alSite" id="alSiteHost" checked> <span id="alSiteHostText"></span></label>
+        <div class="al-note" id="alSiteCovers"></div>
+        <label><input type="radio" name="alSite" id="alSiteWord"> כל כתובת שמכילה את המילה
+          <input type="text" id="alWord" class="al-word" dir="ltr" aria-label="מילה" autocomplete="off"></label>
+        <button class="primary" id="alSiteAdd">הוספה</button>
+      </div>
+      <h3>מותר עכשיו</h3>
+      <div class="al-list" id="alSites"></div>
+    </section>
+    <section class="al-pane" data-pane="yt">
+      <h3>הוספה מיוטיוב</h3>
+      <div class="al-drop">
+        <input type="text" id="alYtInput" dir="ltr" aria-label="קישור ליוטיוב" autocomplete="off">
+        <div class="al-hint">הדבק קישור לסרטון, ערוץ או פלייליסט</div>
+      </div>
+      <div class="al-pick" id="alYtChoice" hidden>
+        <div class="al-pick-title">מה להתיר?</div>
+        <div id="alYtOptions"></div>
+        <button class="primary" id="alYtAdd">הוספה</button>
+      </div>
+      <h3>מותר עכשיו</h3>
+      <div class="al-list" id="alYt"></div>
+    </section>
+    <div class="msg" id="alMsg"></div>
+    <div class="al-actions">
+      <span class="al-saved" id="alSaved" hidden>✓ נשמר</span>
+      <button class="primary" id="alClose">סגירה</button>
+    </div>
+  </div>
+  <div class="toast" id="toast" hidden></div>
+</section>
+<script src="vendor/fullcalendar/index.global.min.js"></script>
+<script src="vendor/fullcalendar/he.global.min.js"></script>
+<script src="calmodel.js"></script>
+<script src="calendar.js"></script>
+<script src="eventform.js"></script>
+<script src="eventcard.js"></script>
+<script src="settings.js"></script>
+<script src="allowed.js"></script>
+<script src="main.js"></script>
+</body>
+</html>

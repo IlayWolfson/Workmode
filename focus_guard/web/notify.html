@@ -1,0 +1,39 @@
+<!doctype html>
+<html dir="rtl" lang="he">
+<head>
+<meta charset="utf-8">
+<title>Focus Guard</title>
+<link rel="stylesheet" href="common.css">
+<style>
+  body { box-sizing: border-box; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+  .step { height: 100%; box-sizing: border-box; padding: 16px 18px; display: flex; flex-direction: column;
+          justify-content: space-between; gap: 10px; }
+  .text { font-size: 17px; line-height: 1.35; }
+  .row { display: flex; gap: 8px; }
+  .row button { flex: 1; }
+  .nerd { display: flex; align-items: center; gap: 12px; }
+  .nerd img { width: 72px; height: 72px; border-radius: 8px; object-fit: cover; flex: none; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<div class="step" id="first">
+  <div class="text" id="text"></div>
+  <div class="row">
+    <button class="go" id="go"></button>
+    <button id="no"></button>
+  </div>
+</div>
+<div class="step" id="nerdStep" hidden>
+  <div class="nerd">
+    <img src="../../assets/nerd.jpg" alt="">
+    <div class="text" id="nerdText"></div>
+  </div>
+  <div class="row">
+    <button class="yes" id="yes"></button>
+    <button class="no" id="red"></button>
+  </div>
+</div>
+<script src="notify.js"></script>
+</body>
+</html>

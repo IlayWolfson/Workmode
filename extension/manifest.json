@@ -1,0 +1,10 @@
+{
+  "manifest_version": 3,
+  "name": "Focus Guard",
+  "version": "1.2.1",
+  "description": "Keeps only the allowed sites open during a Focus Guard session.",
+  "minimum_chrome_version": "110",
+  "permissions": ["tabs", "webNavigation", "alarms", "storage"],
+  "host_permissions": ["http://127.0.0.1/*", "https://www.youtube.com/*"],
+  "background": { "service_worker": "background.js", "type": "module" }
+}

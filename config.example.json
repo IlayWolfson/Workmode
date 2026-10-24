@@ -1,0 +1,26 @@
+{
+  "allowed_apps": [
+    {"process": "Code.exe", "launch": ["%LOCALAPPDATA%/Programs/Microsoft VS Code/Code.exe"]},
+    {"process": "chrome.exe", "launch": ["C:/Program Files/Google/Chrome/Application/chrome.exe"]},
+    {"process": "WindowsTerminal.exe", "launch": ["wt.exe"]},
+    {"process": "msedge.exe", "launch": ["C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe"]}
+  ],
+  "allowed_sites": ["github.com", "docs.python.org", "claude.ai"],
+  "youtube": {"channels": [], "playlists": []},
+  "protected_processes": [],
+  "popup_seconds": 10,
+  "grace_seconds": 20,
+  "window_percent": 85,
+  "start_with_windows": true,
+  "songs": [],
+  "song_files": [],
+  "video": {"path": "C:/focus-guard/media/punish.mp4", "fallback_url": null, "min_seconds": 20},
+  "roasts": {"language": "he", "model": "gemini-flash-latest", "stock": 10, "refill_at": 3, "max_words": 12},
+  "emergency": {
+    "hold_keys": ["del", "pageup", "pagedown"],
+    "hold_ms": 1500,
+    "hotkeys": ["ctrl+alt+shift+q"],
+    "phrase": "CHANGE-ME-BEFORE-FIRST-USE"
+  },
+  "server": {"port": 47653, "token": "CHANGE-ME-RUN-INIT"}
+}

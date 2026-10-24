@@ -1,0 +1,15 @@
+config.json
+state/
+extension/config.js
+.superpowers/
+__pycache__/
+*.pyc
+dist/
+media/
+leakscan.local.txt
+docs/HANDOFF.md
+docs/argon-*.md
+docs/superpowers/plans/
+docs/manual-test.md
+docs/song-candidates.md
+docs/google-calendar-setup.md

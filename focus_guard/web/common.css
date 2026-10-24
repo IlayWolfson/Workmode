@@ -1,0 +1,31 @@
+:root {
+  --bg: #16181d;
+  --card: #1f2229;
+  --text: #ffffff;
+  --soft: #9aa1ae;
+  --blue: #1a73e8;
+  --green: #1e8e3e;
+  --red: #d93025;
+  --line: #2d3340;
+}
+html, body {
+  margin: 0;
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Segoe UI', system-ui, sans-serif;
+}
+button {
+  font: inherit;
+  font-size: 15px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 0;
+  cursor: pointer;
+  color: #fff;
+  background: var(--line);
+}
+button.go { background: var(--blue); }
+button.yes { background: var(--green); }
+button.no { background: var(--red); }
+.soft { color: var(--soft); font-size: 13px; }

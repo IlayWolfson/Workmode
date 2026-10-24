@@ -1,0 +1,19 @@
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+extend-exclude = [".superpowers", "dist", "media", "state", "docs"]
+
+[tool.ruff.lint]
+# E/F/W: errors and warnings, I: import order, UP: modern syntax, B: likely bugs, ANN: type hints required
+select = ["E", "F", "W", "I", "UP", "B", "ANN"]
+ignore = ["ANN401"]  # Any is allowed where pywebview or Win32 hand us untyped objects
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["ANN"]  # test methods need no annotations
+# Inline HTML pages of the small alert windows.
+"focus_guard/ui.py" = ["E501"]
+
+[tool.mypy]
+python_version = "3.12"
+ignore_missing_imports = true  # pywebview ships no type information
+exclude = ['\.superpowers', "dist", "media", "state"]

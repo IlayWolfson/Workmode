@@ -1,0 +1,40 @@
+/* The allow-list panel ("מה מותר בסשן"). Colors only from the --g-* tokens in calendar.css (dark mode comes later). */
+.gcal .side-button.allow-btn { background: var(--g-event); color: var(--g-surface); }  /* the calendar events' blue */
+.gcal .side-button.allow-btn:hover { background: var(--g-event); filter: brightness(0.92); box-shadow: var(--g-lift); }
+.allow { width: 460px; max-height: calc(100vh - 48px); overflow-y: auto; box-sizing: border-box; }
+.al-tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--g-line); margin-bottom: 4px; }
+.gcal .al-tab { background: none; border: none; border-bottom: 3px solid transparent; border-radius: 0; padding: 8px 14px;
+                font-size: 14px; color: var(--g-soft); cursor: pointer; }
+.gcal .al-tab:hover { color: var(--g-text); }
+.gcal .al-tab.on { color: var(--g-blue); border-bottom-color: var(--g-blue); font-weight: 600; }
+.al-count { background: var(--g-week); color: var(--g-blue); border-radius: 10px; padding: 0 7px; font-size: 12px;
+            margin-inline-start: 4px; }
+.al-pane { display: none; }
+.al-pane.on { display: block; }
+.allow h3 { margin: 14px 0 6px; font-size: 13px; font-weight: 600; color: var(--g-soft); }
+.al-list:empty::after { content: "—"; color: var(--g-soft); font-size: 13px; padding: 4px; display: block; }
+.al-row { display: flex; align-items: center; gap: 10px; padding: 6px 4px; border-radius: 6px; }
+.al-row:hover { background: var(--g-hover); }
+.al-icon { width: 22px; text-align: center; }
+.al-name { flex: 1; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gcal .al-x { background: none; border: none; color: var(--g-soft); cursor: pointer; font-size: 13px; padding: 4px 8px; }
+.gcal .al-x:hover { color: var(--g-red); }
+.gcal .al-x:disabled { opacity: 0.35; cursor: default; color: var(--g-soft); }
+.gcal .al-add { background: none; border: 1px solid var(--g-line); border-radius: 16px; color: var(--g-blue); padding: 3px 12px;
+                font-size: 13px; cursor: pointer; }
+.gcal .al-add:hover { background: var(--g-week); border-color: var(--g-blue-line); }
+.al-drop { border: 2px dashed var(--g-blue-line); border-radius: 10px; padding: 10px; background: var(--g-blue-tint); }
+.al-drop.over { border-color: var(--g-blue); background: var(--g-week); }
+.gcal .al-drop input { width: 100%; border: 1px solid var(--g-line); border-radius: 6px; padding: 7px 9px; font-size: 14px; }
+.al-hint { font-size: 12px; color: var(--g-soft); margin-top: 6px; text-align: center; }
+.al-suggest { border: 1px solid var(--g-line); border-radius: 8px; margin-top: 4px; padding: 2px; box-shadow: var(--g-shadow); }
+.al-pick { margin-top: 10px; border: 1px solid var(--g-line); border-radius: 10px; padding: 10px 12px; display: flex;
+           flex-direction: column; gap: 6px; }
+.al-pick-title { font-size: 13px; font-weight: 600; color: var(--g-soft); }
+.gcal .al-pick label { display: flex; align-items: center; gap: 6px; margin: 0; font-size: 14px; }
+.gcal .al-pick input.al-word { width: 120px; font-size: 14px; padding: 2px 4px; }
+.al-note { font-size: 12px; color: var(--g-soft); margin-inline-start: 24px; }
+.gcal .al-pick button.primary { align-self: flex-start; padding: 5px 16px; }
+.al-actions { display: flex; align-items: center; margin-top: 12px; }
+.al-saved { color: var(--g-green); font-size: 13px; }
+.gcal .al-actions button.primary { margin-inline-start: auto; }
