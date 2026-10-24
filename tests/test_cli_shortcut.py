@@ -43,7 +43,8 @@ class ShortcutCommandTest(unittest.TestCase):
         self.assertEqual(code, 0)
         self.assertEqual(self.made, [(self.paths.icon_source, self.paths.icon)])
         options = self.created[0]
-        self.assertEqual(options["name"], "Hyperbolic Time Chamber")
+        self.assertEqual(options["name"], "Workmode")
+        self.assertEqual(options["directory"], str(self.root))  # next to install.cmd, not on the Desktop
         self.assertEqual(options["arguments"], "-m focus_guard.app")
         self.assertEqual(options["icon"], str(self.paths.icon))
         self.assertEqual(options["workdir"], str(self.root))

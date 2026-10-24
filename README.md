@@ -37,7 +37,7 @@ Requires Windows 11, Python 3.12 and Google Chrome.
 
 1. Clone the repository into a folder inside your user profile (for example `%USERPROFILE%\Workmode`).
 2. Run `install.cmd`. It installs the Python packages, writes a local `config.json` and the extension's
-   `config.js` with a fresh token, and creates the desktop shortcut.
+   `config.js` with a fresh token, and creates the `Workmode` shortcut in the same folder.
 3. In Chrome open `chrome://extensions`, turn on Developer mode, choose "Load unpacked" and pick the `extension`
    folder.
 4. Edit `config.json`: set your own emergency phrase (and the apps you work in), then run

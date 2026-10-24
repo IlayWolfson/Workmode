@@ -146,11 +146,12 @@ def cmd_shortcut(
     icon_maker(paths.icon_source, paths.icon)
     target = str(Path(sys.executable).with_name("pythonw.exe"))
     link = shortcut_maker(
-        name="Hyperbolic Time Chamber",
+        name="Workmode",
         target=target,
         arguments="-m focus_guard.app",
         workdir=str(paths.root),
         icon=str(paths.icon),
+        directory=str(paths.root),
     )
     out(f"Shortcut created: {link}")
     return 0

@@ -4,7 +4,7 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
-TOOLTIP = "Hyperbolic Time Chamber"
+TOOLTIP = "Workmode"
 
 
 def run_tray(

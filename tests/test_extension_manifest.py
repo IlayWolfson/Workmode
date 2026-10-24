@@ -1,0 +1,28 @@
+import json
+import unittest
+from pathlib import Path
+
+from PIL import Image
+
+EXTENSION = Path(__file__).resolve().parent.parent / "extension"
+
+
+class ManifestTest(unittest.TestCase):
+    def setUp(self):
+        self.manifest = json.loads((EXTENSION / "manifest.json").read_text(encoding="utf-8"))
+
+    def test_icons_exist_in_every_size_chrome_shows(self):
+        icons = self.manifest["icons"]
+        self.assertEqual(sorted(icons, key=int), ["16", "32", "48", "128"])
+        for size, name in icons.items():
+            with self.subTest(size=size), Image.open(EXTENSION / name) as image:
+                self.assertEqual(image.size, (int(size), int(size)))
+
+    def test_name_and_description_say_workmode(self):
+        self.assertEqual(self.manifest["name"], "Workmode")
+        self.assertIn("Workmode", self.manifest["description"])
+        self.assertNotIn("Focus Guard", self.manifest["description"])
+
+
+if __name__ == "__main__":
+    unittest.main()

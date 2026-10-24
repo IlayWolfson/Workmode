@@ -117,7 +117,7 @@ checking the calendar by hand. It never starts a guard and never touches your `c
   locally with its Hebrew locale.
 
 ## Desktop app
-`python -m focus_guard shortcut` creates a Desktop shortcut called Hyperbolic Time Chamber with your picture as
+`python -m focus_guard shortcut` creates a shortcut called Workmode in the project folder, with your picture as
 the icon. The app runs in the background with a tray icon (click it to open the window); closing the window only
 hides it. Outside a session the window is the week view (see Planned sessions). During a session it is a small
 clock with the time left, the waiting programs and the mute button; it has no stop button. The 📅 button on the

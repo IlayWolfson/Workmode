@@ -1,4 +1,4 @@
-"""Create a Desktop shortcut with a custom icon (PowerShell and WScript.Shell)."""
+"""Create a shortcut with a custom icon (PowerShell and WScript.Shell)."""
 
 import subprocess
 from collections.abc import Callable
@@ -8,11 +8,20 @@ def _quote(text: object) -> str:
     return "'" + str(text).replace("'", "''") + "'"
 
 
-def build_script(name: str, target: str, arguments: str, workdir: str, icon: str, folder: str = "Desktop") -> str:
-    """folder: a .NET special folder name, "Desktop" or "Startup"."""
+def build_script(
+    name: str,
+    target: str,
+    arguments: str,
+    workdir: str,
+    icon: str,
+    folder: str = "Desktop",
+    directory: str | None = None,
+) -> str:
+    """folder: a .NET special folder name, "Desktop" or "Startup"; directory, when given, is a plain folder instead."""
+    where = _quote(directory) if directory is not None else f"[Environment]::GetFolderPath({_quote(folder)})"
     return "\n".join(
         [
-            f"$folder = [Environment]::GetFolderPath({_quote(folder)})",
+            f"$folder = {where}",
             f"$path = Join-Path $folder {_quote(name + '.lnk')}",
             "$shell = New-Object -ComObject WScript.Shell",
             "$link = $shell.CreateShortcut($path)",
@@ -34,6 +43,7 @@ def create_shortcut(
     icon: str,
     run: Callable[..., subprocess.CompletedProcess] = subprocess.run,
     folder: str = "Desktop",
+    directory: str | None = None,
 ) -> str:
     result = run(
         [
@@ -41,7 +51,7 @@ def create_shortcut(
             "-NoProfile",
             "-NonInteractive",
             "-Command",
-            build_script(name, target, arguments, workdir, icon, folder),
+            build_script(name, target, arguments, workdir, icon, folder, directory),
         ],
         capture_output=True,
         text=True,

@@ -30,7 +30,7 @@ from .scheduler import Scheduler
 from .session import load_session
 from .tray import run_tray
 
-TITLE = "Focus Guard"
+TITLE = "Workmode"
 APP_ID = "FocusGuard.App"
 MUTEX = "Local\\FocusGuard.Background"
 SHOW_EVENT = "Local\\FocusGuard.Show"

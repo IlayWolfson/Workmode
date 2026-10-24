@@ -1,6 +1,6 @@
 """Start with Windows: a shortcut in the user's Startup folder (visible, removable by hand, sets the work folder).
 
-Turning the setting off deletes the shortcut.
+Turning the setting off deletes the shortcut. A shortcut left under an old name is deleted either way.
 """
 
 import os
@@ -11,12 +11,25 @@ from pathlib import Path
 from .paths import Paths
 from .shortcut import create_shortcut
 
-NAME = "Hyperbolic Time Chamber"
+NAME = "Workmode"
+LEGACY_NAMES = ("Hyperbolic Time Chamber",)
 STARTUP = Path("Microsoft") / "Windows" / "Start Menu" / "Programs" / "Startup"
 
 
 def startup_link(env: Mapping[str, str] = os.environ) -> Path:
     return Path(env["APPDATA"]) / STARTUP / f"{NAME}.lnk"
+
+
+def legacy_links(env: Mapping[str, str] = os.environ) -> list[Path]:
+    return [Path(env["APPDATA"]) / STARTUP / f"{name}.lnk" for name in LEGACY_NAMES]
+
+
+def remove_legacy(links: list[Path], remove: Callable[[Path], object]) -> list[Path]:
+    """Delete old-name links that exist, so the app does not also start under its old name."""
+    removed = [link for link in links if link.exists()]
+    for link in removed:
+        remove(link)
+    return removed
 
 
 def sync(enabled: bool, link: Path, make: Callable[[], object], remove: Callable[[Path], object]) -> str:
@@ -41,4 +54,5 @@ def apply(paths: Paths, enabled: bool) -> str:
             folder="Startup",
         )
 
+    remove_legacy(legacy_links(), Path.unlink)
     return sync(enabled, startup_link(), make, Path.unlink)

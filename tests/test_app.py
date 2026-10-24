@@ -8,6 +8,11 @@ PAGE = "".join(
 )
 
 
+class TitleTest(unittest.TestCase):
+    def test_window_is_called_workmode(self):
+        self.assertEqual(app.TITLE, "Workmode")
+
+
 class PageTest(unittest.TestCase):
     def test_page_has_both_start_buttons_and_the_status_call(self):
         self.assertIn('dir="rtl"', PAGE)

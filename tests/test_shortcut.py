@@ -26,6 +26,24 @@ class BuildScriptTest(unittest.TestCase):
         self.assertIn("GetFolderPath('Startup')", script)
         self.assertNotIn("Desktop", script)
 
+    def test_directory_puts_the_shortcut_in_that_folder(self):
+        script = shortcut.build_script("N", "t", "a", "w", "i", directory="C:/My Apps/Workmode")
+        self.assertIn("$folder = 'C:/My Apps/Workmode'", script)
+        self.assertNotIn("GetFolderPath", script)
+
+    def test_create_shortcut_passes_the_directory_on(self):
+        shortcut.create_shortcut("N", "t", "a", "w", "i", run=self.fake_run(), directory="C:/proj")
+        self.assertIn("$folder = 'C:/proj'", self.commands[0][-1])
+
+    def fake_run(self, returncode=0, stdout="", stderr=""):
+        self.commands = []
+
+        def run(command, **kwargs):
+            self.commands.append(command)
+            return SimpleNamespace(returncode=returncode, stdout=stdout, stderr=stderr)
+
+        return run
+
     def test_single_quotes_are_doubled(self):
         script = shortcut.build_script("N", "C:/O'Brien/pythonw.exe", "-m x", "C:/p", "C:/p/i.ico")
         self.assertIn("'C:/O''Brien/pythonw.exe'", script)
