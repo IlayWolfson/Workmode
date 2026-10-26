@@ -14,7 +14,7 @@ from .launcher import spawn_module
 from .paths import DEFAULT, Paths
 from .procfiles import pid_alive
 from .session import MAX_MINUTES, Session, load_session
-from .starting import begin_session
+from .starting import UpdateInProgress, begin_session
 from .watcher import WinInfo
 
 
@@ -102,7 +102,11 @@ def cmd_start(
     if not 1 <= minutes <= MAX_MINUTES:
         out(f"minutes must be from 1 to {MAX_MINUTES}")
         return 1
-    begin_session(paths, Session(float(now), float(now) + minutes * 60.0, live), spawn)
+    try:
+        begin_session(paths, Session(float(now), float(now) + minutes * 60.0, live), spawn)
+    except UpdateInProgress as error:
+        out(str(error))
+        return 1
     if live:
         allowed = ", ".join(app.process for app in cfg.allowed_apps)
         out(

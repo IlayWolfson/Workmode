@@ -8,6 +8,7 @@ from focus_guard import cli
 from focus_guard.paths import Paths
 from focus_guard.watcher import WinInfo
 from tests.helpers import base_config
+from tests.update_fixtures import UNFINISHED_JSON
 
 EXAMPLE = Path(__file__).resolve().parent.parent / "config.example.json"
 
@@ -145,6 +146,15 @@ class StartStatusTest(CliCase):
         self.assertEqual(self.run_cli("start", "10"), 0)
         self.assertEqual(self.spawned[2:], ["focus_guard.run_guard", "focus_guard.run_guardian"])
         self.assertIn("resum", self.output().lower())
+
+    def test_start_during_an_update_is_refused_with_a_message(self):
+        self.write_config()
+        self.paths.state.mkdir(exist_ok=True)
+        self.paths.update_journal.write_text(UNFINISHED_JSON, encoding="utf-8")
+        self.assertEqual(self.run_cli("start", "10"), 1)
+        self.assertIn("מתעדכן", self.output())
+        self.assertFalse(self.paths.session.exists())
+        self.assertEqual(self.spawned, [])
 
     def test_bad_minutes_start_nothing(self):
         self.write_config()

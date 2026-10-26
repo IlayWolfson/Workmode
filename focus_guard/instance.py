@@ -15,6 +15,7 @@ import winerror
 
 POLL_MS = 250
 ASFW_ANY = -1
+SYNCHRONIZE = 0x00100000
 
 
 def claim(name: str) -> Any | None:
@@ -29,6 +30,17 @@ def claim(name: str) -> Any | None:
 
 def release(handle: Any) -> None:
     handle.Close()
+
+
+def exists(name: str) -> bool:
+    """True while some process holds the named mutex. Only looks: unlike claim, it never creates the mutex, so it can
+    never make another process's claim fail."""
+    try:
+        handle = win32event.OpenMutex(SYNCHRONIZE, False, name)
+    except pywintypes.error:
+        return False
+    win32api.CloseHandle(handle)
+    return True
 
 
 def signal_show(name: str) -> None:

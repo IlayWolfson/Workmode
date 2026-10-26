@@ -36,7 +36,7 @@ from .scheduler import (
 )
 from .session import MAX_MINUTES, Session, clear_session, load_session
 from .songs import RecentSongs, library, pick
-from .starting import begin_session
+from .starting import UpdateInProgress, begin_session
 
 CREATE_NO_WINDOW = 0x08000000
 CONFIG_ERROR = "יש שגיאה ב-config.json: {}. ממשיכים עם ההגדרות הקודמות."
@@ -137,14 +137,23 @@ class Background:
         if self._guard_alive():
             self._pending.append((session, now + HANDOVER_SECONDS))
             return
-        begin_session(self._paths, session, self._spawn)
+        self._try_begin(session, now)
+
+    def _try_begin(self, session: Session, now: float) -> None:
+        """While an update replaces files a start is refused for a moment: the session waits and is tried again on
+        the next tick, until it would have ended."""
+        try:
+            begin_session(self._paths, session, self._spawn)
+        except UpdateInProgress:
+            if not session.finished(now):
+                self._pending.append((session, now))
 
     def _start_pending(self, now: float) -> None:
         if not self._pending or (self._guard_alive() and now < self._pending[0][1]):
             return
         pending, self._pending = self._pending, []
         for session, _ in pending:
-            begin_session(self._paths, session, self._spawn)
+            self._try_begin(session, now)
 
     def _play_cue(self, key: str, configured: tuple[str, ...]) -> None:
         song = self._songs.get(key)

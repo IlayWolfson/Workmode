@@ -4,3 +4,4 @@ pywebview>=5.0
 pillow>=10
 pycaw>=20240210
 pystray>=0.19
+cryptography>=44.0.1

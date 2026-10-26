@@ -21,6 +21,18 @@ class ClaimTest(unittest.TestCase):
         self.assertIsNotNone(again)
         instance.release(again)
 
+    def test_exists_looks_without_creating(self):
+        name = unique("mutex")
+        self.assertFalse(instance.exists(name))
+        self.assertFalse(instance.exists(name))  # looking did not create it
+        held = instance.claim(name)
+        self.assertTrue(instance.exists(name))
+        instance.release(held)
+        self.assertFalse(instance.exists(name))
+        mine = instance.claim(name)
+        self.assertIsNotNone(mine)  # looking never stood in the way of a claim
+        instance.release(mine)
+
 
 class ShowSignalTest(unittest.TestCase):
     def test_signal_show_reaches_the_waiting_process(self):

@@ -13,6 +13,7 @@ from focus_guard.paths import Paths
 from focus_guard.scheduler import Scheduler
 from focus_guard.session import Session, load_session, write_session
 from tests.helpers import base_config
+from tests.update_fixtures import UNFINISHED_JSON
 
 START = datetime(2026, 10, 25, 14, 0).timestamp()
 KEY = "math@2026-10-25"
@@ -175,6 +176,17 @@ class PlannedSessionTest(BackgroundCase):
         self.run_to(START + 130, step=5)
         self.assertEqual(len(self.spawned), 4)
         self.assertEqual(load_session(self.paths.session, START + 131).occurrence, "next@2026-10-25")
+
+    def test_a_planned_start_during_an_update_waits_and_starts_after_it(self):
+        self.write_events(self.math_event())
+        self.paths.update_journal.write_text(UNFINISHED_JSON, encoding="utf-8")
+        self.run_to(START + 10)
+        self.assertEqual(self.spawned, [])
+        self.assertFalse(self.paths.session.exists())
+        self.paths.update_journal.unlink()
+        self.run_to(START + 20)
+        self.assertEqual(self.spawned, ["focus_guard.run_guard", "focus_guard.run_guardian"])
+        self.assertEqual(load_session(self.paths.session, START + 21).occurrence, KEY)
 
     def test_follow_on_starts_anyway_when_the_old_guard_hangs(self):
         self.write_events(self.math_event(end="14:02"), self.math_event(id="next", start="14:02", end="14:30"))

@@ -48,9 +48,27 @@ Try it without enforcement first: `focus start 25` is a dry run that only logs w
 `python tools/preview_calendar.py` opens the calendar on sample data. The full guide is in
 [docs/user-guide.md](docs/user-guide.md).
 
+## Updating
+
+Workmode updates only from signed GitHub Releases.
+
+- When a new version is ready, the Workmode button in Chrome's toolbar shows an orange `!`. Open it and click
+  "עדכון לגרסה העדכנית", or double-click `Update.cmd` in the install folder. Both run the same checks.
+- Nothing installs on its own. An update never runs during a session or within 10 minutes of a planned one; after the
+  session the button becomes active.
+- The updater checks the release's signature and every file, backs up the files it replaces, starts the new version
+  and rolls back if it does not come up. `config.json`, `extension/config.js`, `state/` and `media/` are never touched.
+- In a git clone the updater refuses; update with `git pull`.
+- Version 1.2.2 and older have no updater yet: update them once by hand.
+
+Maintainer: run `python tools/release.py --new-key` once (the private key stays offline in
+`%USERPROFILE%\.workmode\`), then `python tools/release.py 1.3.0` for each release. If the signing key is ever lost
+or leaked, no more signed releases are published, a notice goes here, and users reinstall from a fresh clone that
+carries a new public key.
+
 ## Tests and quality
 
-- **539 Python tests** (`python -m unittest discover -s tests -t .`) and **59 JavaScript tests** for the extension
+- **722 Python tests** (`python -m unittest discover -s tests -t .`) and **79 JavaScript tests** for the extension
   and the calendar logic (`node --test extension/*.test.mjs "tests/js/*.test.mjs"`).
 - `ruff check`, `ruff format --check` and `mypy` on `focus_guard` and `tools` all pass;
   every function is typed.

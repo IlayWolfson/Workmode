@@ -8,6 +8,7 @@ hides it. The Desktop shortcut starts it with the window shown; the Startup shor
 import argparse
 import ctypes
 import json
+import os
 import sys
 import threading
 import time
@@ -18,6 +19,7 @@ from typing import Any
 
 from . import instance
 from .appapi import AppApi
+from .appupdate import UpdateService, recover_at_start, run_checks, start_update_bridge, write_ready
 from .autostart import apply as apply_autostart
 from .background import Background, SubprocessNotify
 from .config import load_config_safe
@@ -29,6 +31,8 @@ from .procfiles import remove_pid, write_pid
 from .scheduler import Scheduler
 from .session import load_session
 from .tray import run_tray
+from .update_apply import QUIT_EVENT
+from .update_check import UrllibHttp, check
 
 TITLE = "Workmode"
 APP_ID = "FocusGuard.App"
@@ -174,6 +178,7 @@ def _run(background: bool) -> int:
         return 1
     finally:
         remove_pid(DEFAULT.app_pid)
+        DEFAULT.app_ready.unlink(missing_ok=True)
     return 0
 
 
@@ -249,12 +254,45 @@ def _serve(background: bool, log: ErrorLog) -> None:
     windows.append(window)
     threading.Thread(target=run_loop, args=(worker.tick, stop, log), daemon=True).start()
     threading.Thread(target=instance.wait_show, args=(SHOW_EVENT, show, stop), daemon=True).start()
+    threading.Thread(target=instance.wait_show, args=(QUIT_EVENT, quit_all, stop), daemon=True).start()
+    bridge = _start_updates(cfg, stop, log)
     tray = run_tray(show, lambda: show(calendar=True), quit_all, DEFAULT.icon)
+
+    def started() -> None:
+        try:
+            write_ready(DEFAULT, os.getpid(), os.environ)  # tells a waiting updater the new version is up
+        except OSError:
+            log.write(traceback.format_exc())
+        if DEFAULT.icon.exists():
+            set_window_icon(TITLE, DEFAULT.icon)
+
     try:
-        webview.start(lambda: set_window_icon(TITLE, DEFAULT.icon) if DEFAULT.icon.exists() else None)
+        webview.start(started)
     finally:
         stop.set()
         tray.stop()
+        if bridge is not None:
+            bridge.shutdown()
+            bridge.server_close()
+
+
+def _start_updates(cfg: Any, stop: threading.Event, log: ErrorLog) -> Any:
+    """The daily update check and the update bridge on the bridge port + 1 (None when it could not start)."""
+    service = UpdateService(
+        DEFAULT,
+        lambda: spawn_module("focus_guard.update", DEFAULT.root, ("--apply",)),
+        spawn_recover=lambda: spawn_module("focus_guard.update", DEFAULT.root, ("--recover",)),
+    )
+    http = UrllibHttp()
+
+    def check_once() -> None:
+        service.status()  # also undoes an update whose updater was killed, when Chrome is not asking
+        check(DEFAULT, http, time.time())
+
+    threading.Thread(target=run_checks, args=(check_once, stop, log.write), daemon=True).start()
+    if cfg is None:
+        return None
+    return start_update_bridge(cfg.server_port + 1, cfg.server_token, service, log.write)
 
 
 def on_drop(api: Any, evaluate: Callable[[str], object], event: dict) -> None:
@@ -297,18 +335,26 @@ def main(
     argv: list[str] | None = None,
     claim: Callable[[str], Any | None] = instance.claim,
     signal_show: Callable[[str], None] = instance.signal_show,
+    recover: Callable[[], bool] | None = None,
+    restart: Callable[[], None] | None = None,
 ) -> int:
     parser = argparse.ArgumentParser(prog="focus_guard.app")
     parser.add_argument("--background", action="store_true", help="start hidden, in the tray (used at login)")
     args = parser.parse_args(argv)
     handle = claim(MUTEX)
-    if handle is None:  # already running: bring its window up instead
+    if handle is None:  # already running: bring its window up instead (and never touch the files under it)
         signal_show(SHOW_EVENT)
         return 0
     try:
-        return _run(args.background)
+        undone = recover() if recover else recover_at_start(DEFAULT, claim, instance.release)
+        if not undone:
+            return _run(args.background)
     finally:
         instance.release(handle)
+    # an interrupted update was undone after this process loaded the new code: start the old code, now that the
+    # new process can claim the app's mutex
+    (restart or (lambda: spawn_module("focus_guard.app", DEFAULT.root, ("--background",))))()
+    return 0
 
 
 if __name__ == "__main__":

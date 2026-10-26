@@ -2,8 +2,11 @@ import { isAllowedUrl, tabsToCheck, blockedPageUrl } from './allowed.js';
 import { createLookup, createTabGate, urlAllowed } from './ytlookup.js';
 import { createSignInTrail, isSignInUrl } from './signin.js';
 import { FOCUS } from './config.js';
+import { badgeFor, reloadDecision } from './update.js';
 
 const BASE = `http://127.0.0.1:${FOCUS.port}`;
+// The app's own bridge: it runs all the time, the session bridge above only during a session.
+const UPDATE_URL = `http://127.0.0.1:${FOCUS.port + 1}/update?token=${encodeURIComponent(FOCUS.token)}`;
 let allowed = null; // {sites, youtube}; null = bridge unreachable or not enforcing: fail open
 const tabUrls = new Map();
 const gate = createTabGate();
@@ -115,9 +118,32 @@ chrome.tabs.onRemoved.addListener((tabId, removeInfo) => {
   if (/^https?:/i.test(url) && isAllowedUrl(url, allowed.sites)) report('tab_closed', hostOf(url));
 });
 
+// The orange "!" when an update is ready. After the app was updated, one reload makes Chrome read the new files.
+async function refreshUpdate() {
+  let status = null;
+  try {
+    const response = await fetch(UPDATE_URL);
+    if (response.ok) status = await response.json();
+  } catch {
+    // the app is not running: no badge
+  }
+  await chrome.action.setBadgeText({ text: badgeFor(status) });
+  await chrome.action.setBadgeBackgroundColor({ color: '#F28C28' });
+  if (status === null) return;
+  const stored = await chrome.storage.local.get('reloadTo');
+  const decision = reloadDecision(status.installed, chrome.runtime.getManifest().version, stored);
+  await chrome.storage.local.set({ wrongFolder: decision.wrongFolder });
+  if (decision.reload) {
+    await chrome.storage.local.set(decision.store);
+    chrome.runtime.reload();
+  }
+}
+
 chrome.alarms.create('refresh', { periodInMinutes: 0.5 });
 chrome.alarms.onAlarm.addListener(refreshSites);
+chrome.alarms.onAlarm.addListener(refreshUpdate);
 refreshSites();
+refreshUpdate();
 
 // The blocked page asks whether enforcement is still on; when it is not, it sends the tab back.
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {

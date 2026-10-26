@@ -16,3 +16,19 @@ test('both navigation listeners refresh a sleeping worker before checking', () =
 test('the sweep checks each tab at the address it is loading', () => {
   assert.match(source, /for \(const \{ id, url \} of tabsToCheck\(tabs, allowed\.sites\)\) await check\(id, url\);/);
 });
+
+test('the update state comes from the app bridge on port + 1 with the token only', () => {
+  assert.match(source, /http:\/\/127\.0\.0\.1:\$\{FOCUS\.port \+ 1\}\/update\?token=\$\{encodeURIComponent\(FOCUS\.token\)\}/);
+});
+
+test('the extension reloads itself only when reloadDecision says so, and only there', () => {
+  assert.equal(source.split('chrome.runtime.reload()').length - 1, 1);
+  assert.match(source, /const decision = reloadDecision\(status\.installed, chrome\.runtime\.getManifest\(\)\.version, stored\);/);
+  assert.match(source, /if \(decision\.reload\) \{\s*await chrome\.storage\.local\.set\(decision\.store\);\s*chrome\.runtime\.reload\(\);/);
+});
+
+test('the badge follows the update state on start and on every alarm', () => {
+  assert.match(source, /chrome\.action\.setBadgeText\(\{ text: badgeFor\(status\) \}\)/);
+  assert.match(source, /chrome\.alarms\.onAlarm\.addListener\(refreshUpdate\);/);
+  assert.match(source, /\nrefreshUpdate\(\);/);
+});

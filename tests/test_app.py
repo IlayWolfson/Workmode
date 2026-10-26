@@ -101,6 +101,31 @@ class SingleInstanceTest(unittest.TestCase):
         code = app.main([], claim=lambda name: None, signal_show=signals.append)
         self.assertEqual((code, signals), (0, [app.SHOW_EVENT]))
 
+    def test_after_undoing_an_interrupted_update_the_app_restarts_on_the_old_code(self):
+        events = []
+
+        class Handle:
+            def Close(self):
+                events.append("released")
+
+        def claim(name):
+            events.append(name)
+            return Handle()
+
+        code = app.main(
+            [], claim=claim, recover=lambda: events.append("recover") or True, restart=lambda: events.append("restart")
+        )
+        self.assertEqual(code, 0)
+        self.assertEqual(events, [app.MUTEX, "recover", "released", "restart"])  # the new process can claim the app
+
+    def test_a_second_start_never_touches_the_files(self):
+        undone = []
+        app.main([], claim=lambda name: None, signal_show=lambda name: None, recover=lambda: undone.append(1) or True)
+        self.assertEqual(undone, [])
+
+    def test_quit_event_name(self):
+        self.assertEqual(app.QUIT_EVENT, "Local\\FocusGuard.Quit")
+
 
 class ViewSizerTest(unittest.TestCase):
     def test_hidden_window_is_not_resized_until_shown(self):
