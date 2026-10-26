@@ -2,7 +2,7 @@
 
 import re
 
-VERSION = "1.2.3"
+VERSION = "1.2.4"
 
 _PATTERN = re.compile(r"([0-9]{1,4})\.([0-9]{1,4})\.([0-9]{1,4})")
 
