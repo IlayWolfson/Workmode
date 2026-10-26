@@ -17,6 +17,7 @@ from .keys import parse_chord
 from .youtube import YouTubeLists, parse_channel, parse_playlist, parse_video, youtube_lists
 
 PLACEHOLDER_PREFIX = "CHANGE-ME"
+MAX_PORT = 65534  # the update bridge listens on port + 1
 MIN_PHRASE, MAX_PHRASE = 8, 200  # the typed phrase passes through a small pipe, see ui.MAX_TYPED
 DEFAULT_PROTECTED = (
     "explorer.exe",
@@ -346,7 +347,7 @@ def _server(data: dict) -> tuple[int, str]:
     server = _section(data, "server", {"port", "token"})
     token = _text(server.get("token"), "server.token", 16)
     _need(not token.startswith(PLACEHOLDER_PREFIX), "server.token: run 'init' to generate one")
-    return _int(server.get("port", 47653), "server.port", 1024, 65535), token
+    return _int(server.get("port", 47653), "server.port", 1024, MAX_PORT), token
 
 
 def load_server(path: str | Path) -> tuple[int, str] | None:

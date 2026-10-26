@@ -34,6 +34,10 @@ class ConfigCase(unittest.TestCase):
 
 
 class ValidConfigTest(ConfigCase):
+    def test_highest_port_is_65534(self):
+        self.data["server"]["port"] = 65534  # the update bridge listens on port + 1
+        self.assertEqual(self.load().server_port, 65534)
+
     def test_loads_and_applies_defaults(self):
         cfg = self.load()
         self.assertEqual([app.process for app in cfg.allowed_apps], ["code.exe", "chrome.exe"])
@@ -209,6 +213,8 @@ class RejectedConfigTest(ConfigCase):
         self.assertRejected("token")
         self.data["server"] = {"port": 80, "token": "0123456789abcdef0123456789abcdef"}
         self.assertRejected("port")
+        self.data["server"] = {"port": 65535, "token": "0123456789abcdef0123456789abcdef"}
+        self.assertRejected("'server.port' must be an integer from 1024 to 65534")
 
     def test_roast_rules(self):
         self.data["roasts"] = {"stock": 5, "refill_at": 6}
@@ -296,8 +302,14 @@ class LoadServerTest(ConfigCase):
         self.data["server"]["token"] = "short"
         self.assertIsNone(self.server())
 
+    def test_highest_port_is_65534(self):
+        self.data["server"]["port"] = 65534
+        self.assertEqual(self.server(), (65534, self.TOKEN))
+        self.data["server"]["port"] = 65535
+        self.assertIsNone(self.server())
+
     def test_port_out_of_range_gives_none(self):
-        for port in (80, True):
+        for port in (80, True, 65535):
             self.data["server"]["port"] = port
             self.assertIsNone(self.server(), port)
 
