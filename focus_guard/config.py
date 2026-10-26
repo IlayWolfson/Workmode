@@ -307,9 +307,7 @@ def parse_config(text: str) -> Config:
     hold_keys, hold_chords, hold_ms, hotkeys, hotkey_chords, phrase = _emergency(
         _section(data, "emergency", {"hold_keys", "hold_ms", "hotkeys", "phrase"})
     )
-    server = _section(data, "server", {"port", "token"})
-    token = _text(server.get("token"), "server.token", 16)
-    _need(not token.startswith(PLACEHOLDER_PREFIX), "server.token: run 'init' to generate one")
+    server_port, server_token = _server(data)
 
     return Config(
         allowed_apps=_apps(data.get("allowed_apps")),
@@ -336,12 +334,33 @@ def parse_config(text: str) -> Config:
         hotkeys=hotkeys,
         hotkey_chords=hotkey_chords,
         phrase=phrase,
-        server_port=_int(server.get("port", 47653), "server.port", 1024, 65535),
-        server_token=token,
+        server_port=server_port,
+        server_token=server_token,
         youtube=_youtube(_section(data, "youtube", {"channels", "playlists", "videos"})),
         videos=videos,
         video_files=_songs(data.get("video_files", []), "video_files"),
     )
+
+
+def _server(data: dict) -> tuple[int, str]:
+    server = _section(data, "server", {"port", "token"})
+    token = _text(server.get("token"), "server.token", 16)
+    _need(not token.startswith(PLACEHOLDER_PREFIX), "server.token: run 'init' to generate one")
+    return _int(server.get("port", 47653), "server.port", 1024, 65535), token
+
+
+def load_server(path: str | Path) -> tuple[int, str] | None:
+    """The bridge port and token from config.json even when another section is invalid, or None. Never raises."""
+    try:
+        data = json.loads(Path(path).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    if not isinstance(data, dict):
+        return None
+    try:
+        return _server(data)
+    except ConfigError:
+        return None
 
 
 def load_config_safe(path: str | Path, last_good: str | Path) -> tuple[Config | None, str]:

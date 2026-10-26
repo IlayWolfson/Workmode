@@ -8,6 +8,7 @@ from focus_guard.config import (
     hint_text,
     load_config,
     load_config_safe,
+    load_server,
     unresolved_launches,
     word_site_ok,
 )
@@ -264,6 +265,58 @@ class LastGoodTest(ConfigCase):
         cfg, error = load_config_safe(self.config, self.last_good)
         self.assertIsNone(cfg)
         self.assertIn("cannot read config", error)
+
+
+class LoadServerTest(ConfigCase):
+    TOKEN = "0123456789abcdef0123456789abcdef"
+
+    def server(self):
+        return load_server(write_config(self.dir, self.data))
+
+    def test_valid_config_gives_port_and_token(self):
+        self.data["server"]["port"] = 47700
+        self.assertEqual(self.server(), (47700, self.TOKEN))
+
+    def test_other_sections_broken_still_gives_server(self):
+        self.data["video"] = {"path": str(self.dir / "missing.mp4")}
+        self.data["emergency"]["phrase"] = "CHANGE-ME-BEFORE-FIRST-USE"
+        with self.assertRaises(ConfigError):
+            self.load()
+        self.assertEqual(self.server(), (47653, self.TOKEN))
+
+    def test_port_defaults_to_47653(self):
+        del self.data["server"]["port"]
+        self.assertEqual(self.server(), (47653, self.TOKEN))
+
+    def test_placeholder_token_gives_none(self):
+        self.data["server"]["token"] = "CHANGE-ME-0123456789abcdef"
+        self.assertIsNone(self.server())
+
+    def test_short_token_gives_none(self):
+        self.data["server"]["token"] = "short"
+        self.assertIsNone(self.server())
+
+    def test_port_out_of_range_gives_none(self):
+        for port in (80, True):
+            self.data["server"]["port"] = port
+            self.assertIsNone(self.server(), port)
+
+    def test_bad_server_section_gives_none(self):
+        self.data["server"] = []
+        self.assertIsNone(self.server())
+        self.data["server"] = {"port": 47653, "token": self.TOKEN, "extra": 1}
+        self.assertIsNone(self.server())
+
+    def test_not_json_or_missing_file_gives_none(self):
+        path = self.dir / "config.json"
+        path.write_text("{", encoding="utf-8")
+        self.assertIsNone(load_server(path))
+        self.assertIsNone(load_server(self.dir / "absent.json"))
+
+    def test_not_an_object_gives_none(self):
+        path = self.dir / "config.json"
+        path.write_text("[]", encoding="utf-8")
+        self.assertIsNone(load_server(path))
 
 
 if __name__ == "__main__":

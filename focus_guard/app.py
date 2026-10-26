@@ -22,7 +22,7 @@ from .appapi import AppApi
 from .appupdate import UpdateService, recover_at_start, run_checks, start_update_bridge, write_ready
 from .autostart import apply as apply_autostart
 from .background import Background, SubprocessNotify
-from .config import load_config_safe
+from .config import Config, load_config_safe, load_server
 from .cueplayer import MciPlayer
 from .launcher import spawn_module
 from .leftovers import undo_all
@@ -255,7 +255,7 @@ def _serve(background: bool, log: ErrorLog) -> None:
     threading.Thread(target=run_loop, args=(worker.tick, stop, log), daemon=True).start()
     threading.Thread(target=instance.wait_show, args=(SHOW_EVENT, show, stop), daemon=True).start()
     threading.Thread(target=instance.wait_show, args=(QUIT_EVENT, quit_all, stop), daemon=True).start()
-    bridge = _start_updates(cfg, stop, log)
+    bridge = _start_updates(_bridge_settings(cfg, DEFAULT.config), stop, log)
     tray = run_tray(show, lambda: show(calendar=True), quit_all, DEFAULT.icon)
 
     def started() -> None:
@@ -276,8 +276,18 @@ def _serve(background: bool, log: ErrorLog) -> None:
             bridge.server_close()
 
 
-def _start_updates(cfg: Any, stop: threading.Event, log: ErrorLog) -> Any:
-    """The daily update check and the update bridge on the bridge port + 1 (None when it could not start)."""
+def _bridge_settings(cfg: Config | None, config_path: Path) -> tuple[int, str] | None:
+    """The bridge port and token: the loaded config's, else config.json's own server section (or None)."""
+    if cfg is not None:
+        return cfg.server_port, cfg.server_token
+    return load_server(config_path)
+
+
+def _start_updates(server: tuple[int, str] | None, stop: threading.Event, log: ErrorLog) -> Any:
+    """The daily update check and the update bridge on the bridge port + 1 (None when it could not start).
+
+    The bridge needs only the port and token, so it also runs while another part of config.json is invalid.
+    """
     service = UpdateService(
         DEFAULT,
         lambda: spawn_module("focus_guard.update", DEFAULT.root, ("--apply",)),
@@ -290,9 +300,10 @@ def _start_updates(cfg: Any, stop: threading.Event, log: ErrorLog) -> Any:
         check(DEFAULT, http, time.time())
 
     threading.Thread(target=run_checks, args=(check_once, stop, log.write), daemon=True).start()
-    if cfg is None:
+    if server is None:
         return None
-    return start_update_bridge(cfg.server_port + 1, cfg.server_token, service, log.write)
+    port, token = server
+    return start_update_bridge(port + 1, token, service, log.write)
 
 
 def on_drop(api: Any, evaluate: Callable[[str], object], event: dict) -> None:

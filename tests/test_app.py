@@ -1,6 +1,16 @@
+import json
+import tempfile
 import unittest
+import urllib.error
+import urllib.request
+from pathlib import Path
 
 from focus_guard import app
+from focus_guard.appupdate import UpdateService, start_update_bridge
+from focus_guard.config import ConfigError, load_config
+from focus_guard.paths import Paths
+from focus_guard.version import VERSION
+from tests.helpers import base_config, write_config
 
 # every page and script of the main window (not the bundled library)
 PAGE = "".join(
@@ -152,6 +162,79 @@ class ViewSizerTest(unittest.TestCase):
         sizer = app.ViewSizer(lambda width, height: sizes.append((width, height)), visible=True, sizes=given)
         sizer.set_view("calendar")
         self.assertEqual(sizes, [(1418, 766)])
+
+
+class BridgeSettingsTest(unittest.TestCase):
+    def setUp(self):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.dir = Path(tmp.name)
+        self.data = base_config(self.dir / "missing.mp4")  # the video is missing: the whole config is invalid
+        self.data["emergency"]["phrase"] = "CHANGE-ME-BEFORE-FIRST-USE"
+
+    def test_valid_config_uses_its_values(self):
+        video = self.dir / "clip.mp4"
+        video.write_bytes(b"x")
+        path = write_config(self.dir, base_config(video))
+        cfg = load_config(path)
+        path.write_text("{", encoding="utf-8")
+        self.assertEqual(app._bridge_settings(cfg, path), (cfg.server_port, cfg.server_token))
+
+    def test_no_config_reads_the_server_section(self):
+        path = write_config(self.dir, self.data)
+        self.assertEqual(app._bridge_settings(None, path), (47653, self.data["server"]["token"]))
+
+    def test_no_config_and_placeholder_token_gives_none(self):
+        self.data["server"]["token"] = "CHANGE-ME-0123456789abcdef"
+        self.assertIsNone(app._bridge_settings(None, write_config(self.dir, self.data)))
+
+
+class UpdateBridgeIntegrationTest(unittest.TestCase):
+    """The real path an invalid config takes: load_server -> _bridge_settings -> start_update_bridge (no app, no
+    update-check thread; the OS picks the port)."""
+
+    def setUp(self):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.dir = Path(tmp.name)
+        self.data = base_config(self.dir / "missing.mp4")  # the video is missing: the whole config is invalid
+        self.data["emergency"]["phrase"] = "CHANGE-ME-BEFORE-FIRST-USE"
+        self.data["server"]["port"] = 47700
+        self.service = UpdateService(Paths(self.dir), spawn_update=lambda: None)
+
+    def start(self):
+        path = write_config(self.dir, self.data)
+        with self.assertRaises(ConfigError):
+            load_config(path)
+        settings = app._bridge_settings(None, path)
+        self.assertEqual(settings, (47700, self.data["server"]["token"]))
+        server = start_update_bridge(0, settings[1], self.service, self.fail)
+        self.assertIsNotNone(server)
+        self.addCleanup(server.server_close)
+        self.addCleanup(server.shutdown)  # cleanups run last-in first: shutdown, then close
+        return server.server_address[1]
+
+    def get(self, port, token):
+        url = f"http://127.0.0.1:{port}/update?token={token}"
+        opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))  # never through a system proxy
+        with opener.open(url, timeout=5) as response:
+            return response.status, json.loads(response.read().decode("utf-8"))
+
+    def test_invalid_config_still_serves_the_status_with_the_right_token(self):
+        port = self.start()
+        status, body = self.get(port, self.data["server"]["token"])
+        self.assertEqual((status, body["installed"]), (200, VERSION))
+
+    def test_wrong_token_gets_403(self):
+        port = self.start()
+        with self.assertRaises(urllib.error.HTTPError) as caught:
+            self.get(port, "wrong-token-0000000000")
+        caught.exception.close()
+        self.assertEqual(caught.exception.code, 403)
+
+    def test_placeholder_token_starts_no_bridge(self):
+        self.data["server"]["token"] = "CHANGE-ME-0123456789abcdef"
+        self.assertIsNone(app._bridge_settings(None, write_config(self.dir, self.data)))
 
 
 if __name__ == "__main__":
