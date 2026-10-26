@@ -125,6 +125,22 @@ class RefusedTest(AllowedCase):
         self.assertEqual(self.lists.add("site", "uni.ac.il"), {"ok": False, "message": CONFIG_BROKEN})
         self.assertEqual(self.paths.config.read_text(encoding="utf-8"), broken)
 
+    def test_an_invalid_config_is_not_written_by_the_lists(self):
+        data = self.config()
+        data["emergency"]["phrase"] = "CHANGE-ME-BEFORE-FIRST-USE"
+        self.paths.config.write_text(json.dumps(data), encoding="utf-8")
+        before = self.paths.config.read_bytes()
+        result = self.lists.add("site", "uni.ac.il")
+        self.assertFalse(result["ok"])
+        self.assertIn("emergency.phrase", result["message"])
+        self.assertEqual(self.paths.config.read_bytes(), before)
+
+    def test_a_list_of_the_wrong_type_is_broken(self):
+        self.paths.config.write_text(json.dumps({**self.config(), "allowed_sites": 5}), encoding="utf-8")
+        before = self.paths.config.read_bytes()
+        self.assertEqual(self.lists.add("site", "uni.ac.il"), {"ok": False, "message": CONFIG_BROKEN})
+        self.assertEqual(self.paths.config.read_bytes(), before)
+
     def test_offline_youtube(self):
         self.online = False
         self.assertTrue(self.lists.add("playlist", f"https://www.youtube.com/playlist?list={PLAYLIST}")["ok"])

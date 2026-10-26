@@ -1,7 +1,8 @@
 """The settings behind the gear: read for the window (never the phrase) and saved back into config.json safely.
 
-A save is refused during a session and while config.json is broken (a hand edit is never overwritten). The new
-file is checked with load_config before it replaces the old one, so a bad value never reaches config.json.
+A save is refused during a session and while config.json is not a JSON object (a hand edit is never overwritten).
+The result of the change is checked with load_config before it replaces the old file, so a save can complete a fresh
+config (placeholder phrase, no video) but a bad value never reaches config.json.
 """
 
 import json
@@ -93,8 +94,8 @@ def save_settings(paths: Paths, changes: Mapping[str, Any], session_running: boo
 
 def write_config(paths: Paths, change: Callable[[dict], dict], session_running: bool) -> str:
     """Apply change to config.json's data: "" when saved, else the message for the window (a ValueError from change
-    is one). Refused during a session and while config.json is broken; the new file is checked before it replaces the
-    old one, and every key change does not touch is kept as written."""
+    is one). Refused during a session and while config.json is not a JSON object; the result, not the old file, is
+    checked before it replaces the old one, and every key change does not touch is kept as written."""
     if session_running:
         return SESSION_LOCKED
     with _WRITE_LOCK:
@@ -114,14 +115,17 @@ def _replace(source: Path, target: Path) -> bool:
 
 def _write_locked(paths: Paths, change: Callable[[dict], dict]) -> str:
     try:
-        load_config(paths.config)
         raw = json.loads(paths.config.read_text(encoding="utf-8"))
-    except (ConfigError, OSError, ValueError):
+    except (OSError, ValueError):
+        return CONFIG_BROKEN
+    if not isinstance(raw, dict):
         return CONFIG_BROKEN
     try:
         data = change(raw)
     except ValueError as error:
         return str(error)
+    except (TypeError, AttributeError, KeyError):  # a hand-edited section of the wrong type
+        return CONFIG_BROKEN
     paths.state.mkdir(parents=True, exist_ok=True)
     fd, name = tempfile.mkstemp(dir=paths.state, suffix=".config.tmp")
     candidate = Path(name)

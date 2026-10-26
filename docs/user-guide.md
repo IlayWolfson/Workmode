@@ -42,7 +42,8 @@ In the calendar's side panel, "✅ מה מותר בסשן" opens three tabs:
 - **יוטיוב**: paste a link to a video, channel or playlist and choose what to allow: the whole channel, the whole
   playlist or only that video.
 Every change is saved at once into `config.json` (checked first, like the settings) and counts from the next session.
-The button is hidden during a session, and nothing is saved while `config.json` is broken.
+The button is hidden during a session; nothing is saved while `config.json` is not valid JSON, and a change is saved
+only when the result passes the check.
 
 Signing in: a sign-in page of Microsoft, Google or Apple (`login.microsoftonline.com`, `accounts.google.com`, …) opens
 when the tab came from an allowed site (for example Moodle sending you to sign in). Opened directly, it is blocked.
@@ -73,8 +74,8 @@ popover (title, repeat, the song a minute before, full enforcement or trial), cl
 delete; "this event" or "all events" for a repeating one), drag an event to move it, drag its edge to resize it.
 The session that is running is locked: its card has only "יציאת חירום", which opens the phrase box (a trial ends at
 once). "+ יצירה" → "התחלה עכשיו" starts a session now. The gear holds the settings (songs, video, grace seconds,
-start with Windows, a new emergency phrase); it is hidden during a session and never saves over a broken
-`config.json`.
+start with Windows, a new emergency phrase); it is hidden during a session and never saves a `config.json` that does
+not pass the check, so it can also finish a fresh install (set the phrase and tick a video).
 
 The calendar keeps its events in `state/events.json` (you can still edit it by hand; a broken entry is kept as it
 is and reported):

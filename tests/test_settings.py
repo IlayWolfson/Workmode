@@ -4,6 +4,7 @@ import unittest
 from pathlib import Path
 
 from focus_guard.appapi import AppApi
+from focus_guard.config import load_config
 from focus_guard.paths import Paths
 from focus_guard.session import Session, write_session
 from focus_guard.settings import CONFIG_BROKEN, PHRASES_DIFFER, SESSION_LOCKED, read_settings, save_settings
@@ -75,6 +76,41 @@ class SaveTest(SettingsCase):
         self.paths.config.write_text(before + "}", encoding="utf-8")
         self.assertEqual(save_settings(self.paths, {"grace_seconds": 5}, False), CONFIG_BROKEN)
         self.assertEqual(self.paths.config.read_text(encoding="utf-8"), before + "}")
+
+    def fresh(self):
+        """The example config's two problems: the placeholder phrase and a video file that does not exist."""
+        emergency = {**base_config(self.video)["emergency"], "phrase": "CHANGE-ME-BEFORE-FIRST-USE"}
+        video = {"path": str(self.root / "missing.mp4"), "fallback_url": None, "min_seconds": 20}
+        self.write({"emergency": emergency, "video": video})
+        mine = self.root / "mine.webm"
+        mine.write_bytes(b"x")
+        return {"videos": [str(mine)], "video_files": [str(mine)]}
+
+    def test_fresh_install_can_be_completed_from_the_window(self):
+        changes = {**self.fresh(), "phrase": NEW_PHRASE, "phrase_again": NEW_PHRASE}
+        self.assertEqual(save_settings(self.paths, changes, False), "")
+        load_config(self.paths.config)
+        saved = self.config()
+        self.assertEqual((saved["emergency"]["phrase"], saved["videos"]), (NEW_PHRASE, changes["videos"]))
+        self.assertEqual([p.name for p in self.paths.state.iterdir()], [])
+
+    def test_partial_fix_writes_nothing_and_names_the_problem(self):
+        video = self.fresh()
+        before = self.paths.config.read_text(encoding="utf-8")
+        self.assertIn("emergency.phrase", save_settings(self.paths, video, False))
+        self.assertEqual(self.paths.config.read_text(encoding="utf-8"), before)
+
+    def test_not_an_object_is_broken(self):
+        self.paths.config.write_text("[]", encoding="utf-8")
+        self.assertEqual(save_settings(self.paths, {"grace_seconds": 5}, False), CONFIG_BROKEN)
+        self.assertEqual(self.paths.config.read_text(encoding="utf-8"), "[]")
+
+    def test_a_section_of_the_wrong_type_is_broken(self):
+        self.write({"emergency": "x"})
+        before = self.paths.config.read_text(encoding="utf-8")
+        changes = {"phrase": NEW_PHRASE, "phrase_again": NEW_PHRASE}
+        self.assertEqual(save_settings(self.paths, changes, False), CONFIG_BROKEN)
+        self.assertEqual(self.paths.config.read_text(encoding="utf-8"), before)
 
     def test_save_keeps_other_keys_and_validates(self):
         apps = self.config()["allowed_apps"]
