@@ -11,7 +11,9 @@ class LocalizeVideoTest(unittest.TestCase):
     def setUp(self):
         tmp = tempfile.TemporaryDirectory()
         self.addCleanup(tmp.cleanup)
-        self.root = Path(tmp.name)
+        # localize_video writes a resolved path, so compare against a resolved root:
+        # on machines whose TEMP is an 8.3 short name (e.g. C:\Users\RUNNER~1) the two differ.
+        self.root = Path(tmp.name).resolve()
         (self.root / "media").mkdir()
         self.config = self.root / "config.json"
 
