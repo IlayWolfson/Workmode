@@ -70,7 +70,7 @@ carries a new public key.
 
 ## Tests and quality
 
-- **722 Python tests** (`python -m unittest discover -s tests -t .`) and **79 JavaScript tests** for the extension
+- **745 Python tests** (`python -m unittest discover -s tests -t .`) and **79 JavaScript tests** for the extension
   and the calendar logic (`node --test extension/*.test.mjs "tests/js/*.test.mjs"`).
 - `ruff check`, `ruff format --check` and `mypy` on `focus_guard` and `tools` all pass;
   every function is typed.
