@@ -1,5 +1,7 @@
 # Workmode
 
+[![tests](https://github.com/IlayWolfson/Workmode/actions/workflows/tests.yml/badge.svg)](https://github.com/IlayWolfson/Workmode/actions/workflows/tests.yml)
+
 **A Windows 11 focus tool that plans work sessions in a calendar and, while one runs, keeps only the apps and sites you
 chose in front.**
 
